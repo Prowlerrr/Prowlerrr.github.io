@@ -1,4 +1,41 @@
 <template>
-    <div id="title"></div>
-    <div id="description"></div>
+<div id="title"></div>
+<div id="exactDate"></div>
+<div id="description"></div>
+<div id="map"></div>
+<div id="latitude" style="display: none;"></div>
+<div id="longitude" style="display: none;"></div>
+<div id="images"></div>
+
+<script
+	src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap" async defer>
+</script>
+
+<script>
+		var directionsDisplay, directionsService, map;
+
+		var latitude = document.getElementById('latitude').innerHTML;
+		var longitude = document.getElementById('longitude').innerHTML;
+
+		function initMap() {
+			var directionsService = new google.maps.DirectionsService();
+			directionsDisplay = new google.maps.DirectionsRenderer();
+			var latLng = new google.maps.LatLng(latitude, longitude);
+			var mapOptions = {
+				zoom : 15,
+				mapTypeId : google.maps.MapTypeId.ROADMAP,
+				center : latLng
+			}
+			map = new google.maps.Map(document.getElementById("map"),
+					mapOptions);
+			directionsDisplay.setMap(map);
+			
+			var marker = new google.maps.Marker({
+		          position: latLng,
+		          map: map,
+		          title: 'Event map'
+		        });
+		}
+		
+</script> 
 </template>

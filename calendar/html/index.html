@@ -2,6 +2,8 @@
 <script src="/scripts/jquery-3.1.1.min.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
+<link rel="stylesheet" type="text/css" href="calendar.css" />
+
 <link rel="import" href="../events/v1/template.html">
 
 </head>
@@ -23,9 +25,28 @@
 
 					$.each(json, function(key, val) {
 						var span = content.querySelector('#' + key);
-						span.textContent = key + " " + val;
+						span.textContent = val;
+					});
+					
+					var folder = "http://localhost:8000/calendar/events/v1/09-03/";
+
+					$.ajax({
+					    url : folder,
+					    success: function (data) {
+					        $(data).find("a").attr("href", function (i, val) {
+					            if( val.match(/\.(jpe?g|png|gif)$/) ) { 
+					                 $("body").append( "<img src='"+ folder + val +"'>" ); 
+					              /*   var someHtmlString = "<img src='"+ folder + val +"'>";
+					                content.querySelector('#images').textContent = someHtmlString ; */
+					                
+					                /* content.querySelector('#images').appendChild(document.createElement('img')).src=folder + val; */
+					            } 
+					        });
+					    }
 					});
 
+                    console.log(template.content);
+                    
 					var clone = document.importNode(template.content, true);
 					document.querySelector('#container').appendChild(clone);
 				});
