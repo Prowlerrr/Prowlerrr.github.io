@@ -134,7 +134,7 @@
                 } });
             } else {
                 $.ajax({ url : url, dataType : 'json', success : function(data) {
-                    console.log(data);
+                    console.log(data); 
 
                     $.each(data, function(key, val) {
                         if (val.name.match(/\.(jpe?g|png|gif)$/)) {
