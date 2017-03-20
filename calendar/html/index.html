@@ -2,14 +2,15 @@
 <script src="/scripts/jquery-3.1.1.min.js"></script>
 <script src="/scripts/moment.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet"
+	href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <link rel="stylesheet" type="text/css" href="calendar.css" />
 
 </head>
 
 <body>
-    <div id="datepicker"></div>
+	<div id="datepicker"></div>
 	<div id="title"></div>
 	<div id="exactDate"></div>
 	<div id="yearsPassed"></div>
@@ -19,221 +20,183 @@
 	<div id="longitude" style="display: none;"></div>
 	<div id="images"></div>
 
-    <script>
-        var eventsDir = "/calendar/events/v1" 
+	<script>
+        var eventsDir = "/calendar/events/v1"
         var githubUrl = "https://api.github.com/repos/prowlerrr/prowlerrr.github.io/contents" + eventsDir;
-        var siteUrl = "https://prowlerrr.github.io";
         var forceLocal = false;
     </script>
-        
-    <script>
-	    $.ajaxSetup({
-	        async: false
-	    });
-	    
+
+	<script>
+        function isLocal() {
+            return forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1";
+        }
+
+        $.ajaxSetup({ async : false });
+
         var disabledDays = [];
-        
-        if (forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-            $.ajax({
-	            url : eventsDir,
-	            success: function (data) {
-	                 $(data).find("a").attr("href", function (i, val) {
-	                 
-	                 val = val.substring(0, val.length - 1);
-	                 disabledDays.push(val);
-	                }); 
-	            }
-	        });
+
+        if (isLocal()) {
+            $.ajax({ url : eventsDir, success : function(data) {
+                $(data).find("a").attr("href", function(i, val) {
+
+                    val = val.substring(0, val.length - 1);
+                    disabledDays.push(val);
+                });
+            } });
         } else {
-            $.ajax({
-                url: githubUrl,
-                dataType: 'json',
-                /* async: false, */
-                success: function(data){
+            $.ajax({ url : githubUrl, dataType : 'json',
+            success : function(data) {
+                console.log(data);
+
+                $.each(data, function(key, val) {
+                    disabledDays.push(val.name);
+                });
+            }, error : function(data) {
+                console.log('Error loading dates list to init calendar.' + data.statusText);
+            } });
+        }
+
+        var date = new Date();
+        jQuery(document).ready(function() {
+
+            $("#datepicker").datepicker({ dateFormat : 'm-d', beforeShowDay : function(date) {
+                var m = date.getMonth(), d = date.getDate(), y = date.getFullYear();
+
+                for (i = 0; i < disabledDays.length; i++) {
+                    if ($.inArray((m + 1) + '-' + d, disabledDays) != -1) {
+                        return [ true, 'ui-state-focus', '' ];
+                    }
+                }
+                return [ false ];
+
+            }, onSelect : function(dateText) {
+                clear();
+                
+                initData(dateText);
+            } });
+        });
+    </script>
+
+	<script>
+        function clear() {
+            images = $("#title");
+            images.text("");
+            images = $("#exactDate");
+            images.text("");
+            images = $("#yearsPassed");
+            images.text("");
+            images = $("#description");
+            images.text("");
+            images = $("#map");
+            images.text("");
+            images = $("#latitude");
+            images.text("");
+            images = $("#longitude");
+            images.text("");
+            images = $("#images");
+            images.text("");
+        }
+
+        function initProperties(url) {
+            $.ajax({ url : url, dataType : 'xml', success : function(data) {
+                var xml_node = $('data', data);
+                var tags = xml_node.children();
+                tags.each(function() {
+                    var cols = $(this).children();
+
+                    var span = document.querySelector('#' + this.tagName);
+
+                    var myDateStr = new Date(this.textContent);
+                    if (!isNaN(myDateStr.getMonth())) {
+                        span.textContent = moment(myDateStr).format('D MMMM YYYY');
+
+                        years = new Date().getFullYear() - myDateStr.getFullYear();
+                        document.querySelector('#yearsPassed').textContent = years + " years ago";
+                    } else {
+                        span.textContent = this.textContent;
+                    }
+                });
+            }, error : function(data) {
+                console.log('Error loading data.xml');
+            } });
+        }
+
+        function initImages(url) {
+            if (isLocal()) {
+                var folder = eventsDir + "/" + date + "/";
+
+                $.ajax({ url : folder, success : function(data) {
+                    $(data).find("a").attr("href", function(i, val) {
+                        if (val.match(/\.(jpe?g|png|gif)$/)) {
+                            images.append("<img  class=\"images\"  src='"+ folder + val +"'>");
+                        }
+                    });
+                } });
+            } else {
+                $.ajax({ url : url, dataType : 'json', success : function(data) {
                     console.log(data);
 
                     $.each(data, function(key, val) {
-                        disabledDays.push(val.name);
+                        if (val.name.match(/\.(jpe?g|png|gif)$/)) {
+                            images.append("<a href='"+val.download_url+"'> <img  class=\"images\"  src='"+ val.download_url +"'> </a>");
+                        }
                     });
-                },
-                error: function(data){
-                    console.log('Error loading dates list to init calendar.' + data.statusText);
-                }
-            });
-/*         	$.ajax({
-        		  url: githubUrl,
-        		  dataType: "json",
-        		  async: false,
-        		  success: function(json) {
-                      console.log(json);
-
-                      $.each(json, function(key, val) {
-                          disabledDays.push(val.name);
-                      });
-        		  }
-        		}); */
-/*         	
-            $.getJSON(githubUrl,
-                function(json) {
-                    console.log(json);
-
-                    $.each(json, function(key, val) {
-                        disabledDays.push(val.name);
-                    });
-                }); */
+                }, error : function(data) {
+                    console.log('Error loading images.' + data.statusText);
+                } });
+            }
         }
-      
-      var date = new Date();
-        jQuery(document).ready(function() { 
-            $( "#datepicker").datepicker({ 
-                dateFormat: 'm-d',
-                beforeShowDay: function(date) {
-                    var m = date.getMonth(), d = date.getDate(), y = date.getFullYear();
+
+        function initData(date) {
+            $.ajax({ url : githubUrl + "/" + date, dataType : 'json', success : function(data) {
+
+                $.each(data, function(key, val) {
+
+                    var urlNoBranch = this.url.substring(0, this.url.indexOf('?'));
+
+                    $.ajaxSetup({ async : false });
                     
-                    for (i = 0; i < disabledDays.length; i++) {
-                        if($.inArray((m+1) + '-' + d,disabledDays) != -1) {
-                            return [true, 'ui-state-focus', ''];
-                        }
-                    }
-                    return [false];
-        
-                },
-			    onSelect: function(dateText){
-		          clear();
-			      initData(dateText);
-			      initMap();
-		        }
-            });
-        });
-    </script>
-    
-	<script>
-	   function clear() {
- 	       images = $("#title");
-           images.text("");
-           images = $("#exactDate");
-           images.text("");
-           images = $("#yearsPassed");
-           images.text("");
-           images = $("#description");
-           images.text("");
-           images = $("#map");
-           images.text("");
-           images = $("#latitude");
-           images.text("");
-           images = $("#longitude");
-           images.text("");
-           images = $("#images");
-           images.text("");
-	   }
-	   
-	   function initData(date) {
-		    $.ajaxSetup({
-	            async: false
-	        });
-	        
-	        $.ajax({
-			    url: eventsDir + "/" + date + "/data.xml",
-			    dataType: 'xml',
-			    success: function(data){
-			        var xml_node = $('data',data);
-			        var tags = xml_node.children(); 
-			        tags.each(
-                        function( ){
-                            var cols = $(this).children();
-                            
-                            var span = document.querySelector('#' + this.tagName);
-                            
-                            var myDateStr= new Date(this.textContent);
-                            if( ! isNaN ( myDateStr.getMonth() )) {
-							    span.textContent = moment(myDateStr).format('D MMMM YYYY'); 
-							    
-							    years = new Date().getFullYear() - myDateStr.getFullYear();
-							    document.querySelector('#yearsPassed').textContent = years + " years ago";
-							}
-							else {
-							    span.textContent = this.textContent;
-							}
-                        }
-                        );
-			    },
-			    error: function(data){
-			        console.log('Error loading XML data');
-			    }
-			});
+                    $.getJSON(urlNoBranch + "/" + "data.xml", function(data) {
+                        initProperties(data.download_url);
+                    });
 
-	        $.ajaxSetup({
-	            async: true
-	        });				
-	
-	        var folder = eventsDir  + "/" + date + "/";
-
-	        if (forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-		        $.ajax({
-		            url : folder,
-		            success: function (data) {
-		                $(data).find("a").attr("href", function (i, val) {
-		                    if( val.match(/\.(jpe?g|png|gif)$/) ) { 
-		                         images.append( "<img  class=\"images\"  src='"+ folder + val +"'>" );
-		                    } 
-		                });
-		            }
-		        });
-	        } else {
-	            $.ajax({
-	                url: githubUrl + "/" + date,
-	                dataType: 'json',
-	                success: function(data){
-	                    console.log(data);
-	                    
-	                    $.each(data, function(key, val) {
-                            if( val.name.match(/\.(jpe?g|png|gif)$/) ) { 
-                                images.append( "<img  class=\"images\"  src='"+ siteUrl + "/" + eventsDir + "/" + date + "/" + val.name +"'>" );
-                           } 
-	                    });
-	                },
-	                error: function(data){
-	                    console.log('Error loading images.' + data.statusText);
-	                }
-	            });
-	        }
+                    initImages(urlNoBranch);
+                    
+                    initMap();
+                });
+            }, error : function(error) {
+                console.log('Error loading images.' + error.statusText);
+            } });
         }
-	</script>
-	
+    </script>
+
 	<script>
         function initMap() {
             var latitude = document.getElementById('latitude').innerHTML;
             var longitude = document.getElementById('longitude').innerHTML;
-            
+
             if (latitude > 0) {
-	            var directionsDisplay, directionsService, map;
-	        
-	            var directionsService = new google.maps.DirectionsService();
-	            directionsDisplay = new google.maps.DirectionsRenderer();
-	            var latLng = new google.maps.LatLng(latitude, longitude);
-	            var mapOptions = {
-	                zoom : 15,
-	                mapTypeId : google.maps.MapTypeId.ROADMAP,
-	                center : latLng
-	            }
-	            map = new google.maps.Map(document.getElementById("map"),
-	                    mapOptions);
-	            directionsDisplay.setMap(map);
-	            
-	            var marker = new google.maps.Marker({
-	                  position: latLng,
-	                  map: map,
-	                  title: 'Event map'
-	                });
-	         }
+                var directionsDisplay, directionsService, map;
+
+                var directionsService = new google.maps.DirectionsService();
+                directionsDisplay = new google.maps.DirectionsRenderer();
+                var latLng = new google.maps.LatLng(latitude, longitude);
+                var mapOptions = { zoom : 15, mapTypeId : google.maps.MapTypeId.ROADMAP, center : latLng }
+                map = new google.maps.Map(document.getElementById("map"), mapOptions);
+                directionsDisplay.setMap(map);
+
+                var marker = new google.maps.Marker({ position : latLng, map : map, title : 'Event map' });
+            }
         }
-	</script>
-    <script>
+    </script>
+	<script>
         clear();
         initData("3-9");
     </script>
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap" async defer>
+	<script
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap"
+		async defer>
+        
     </script>
 
 </body>
