@@ -20,22 +20,68 @@
 	<div id="images"></div>
 
     <script>
-        var eventsDir = "/calendar/events/v1/"
+        var eventsDir = "/calendar/events/v1" 
+        var githubUrl = "https://api.github.com/repos/prowlerrr/prowlerrr.github.io/contents" + eventsDir;
+        var siteUrl = "https://prowlerrr.github.io";
+        var forceLocal = false;
     </script>
         
     <script>
-      var disabledDays = [];
-      
-      $.ajax({
-            url : eventsDir,
-            success: function (data) {
-                 $(data).find("a").attr("href", function (i, val) {
-                 
-                 val = val.substring(0, val.length - 1);
-                 disabledDays.push(val);
-                }); 
-            }
-        });
+	    $.ajaxSetup({
+	        async: false
+	    });
+	    
+        var disabledDays = [];
+        
+        if (forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+            $.ajax({
+	            url : eventsDir,
+	            success: function (data) {
+	                 $(data).find("a").attr("href", function (i, val) {
+	                 
+	                 val = val.substring(0, val.length - 1);
+	                 disabledDays.push(val);
+	                }); 
+	            }
+	        });
+        } else {
+            $.ajax({
+                url: githubUrl,
+                dataType: 'json',
+                /* async: false, */
+                success: function(data){
+                    console.log(data);
+
+                    $.each(data, function(key, val) {
+                        disabledDays.push(val.name);
+                    });
+                },
+                error: function(data){
+                    console.log('Error loading dates list to init calendar.' + data.statusText);
+                }
+            });
+/*         	$.ajax({
+        		  url: githubUrl,
+        		  dataType: "json",
+        		  async: false,
+        		  success: function(json) {
+                      console.log(json);
+
+                      $.each(json, function(key, val) {
+                          disabledDays.push(val.name);
+                      });
+        		  }
+        		}); */
+/*         	
+            $.getJSON(githubUrl,
+                function(json) {
+                    console.log(json);
+
+                    $.each(json, function(key, val) {
+                        disabledDays.push(val.name);
+                    });
+                }); */
+        }
       
       var date = new Date();
         jQuery(document).ready(function() { 
@@ -87,7 +133,7 @@
 	        });
 	        
 	        $.ajax({
-			    url: eventsDir + date + "/data.xml",
+			    url: eventsDir + "/" + date + "/data.xml",
 			    dataType: 'xml',
 			    success: function(data){
 			        var xml_node = $('data',data);
@@ -120,20 +166,37 @@
 	            async: true
 	        });				
 	
-	        var folder = eventsDir + date + "/";
-	
-	       /*  images = $("#images");
-	        images.text(""); */
-	        $.ajax({
-	            url : folder,
-	            success: function (data) {
-	                $(data).find("a").attr("href", function (i, val) {
-	                    if( val.match(/\.(jpe?g|png|gif)$/) ) { 
-	                         images.append( "<img  class=\"images\"  src='"+ folder + val +"'>" );
-	                    } 
-	                });
-	            }
-	        });
+	        var folder = eventsDir  + "/" + date + "/";
+
+	        if (forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+		        $.ajax({
+		            url : folder,
+		            success: function (data) {
+		                $(data).find("a").attr("href", function (i, val) {
+		                    if( val.match(/\.(jpe?g|png|gif)$/) ) { 
+		                         images.append( "<img  class=\"images\"  src='"+ folder + val +"'>" );
+		                    } 
+		                });
+		            }
+		        });
+	        } else {
+	            $.ajax({
+	                url: githubUrl + "/" + date,
+	                dataType: 'json',
+	                success: function(data){
+	                    console.log(data);
+	                    
+	                    $.each(data, function(key, val) {
+                            if( val.name.match(/\.(jpe?g|png|gif)$/) ) { 
+                                images.append( "<img  class=\"images\"  src='"+ siteUrl + "/" + eventsDir + "/" + date + "/" + val.name +"'>" );
+                           } 
+	                    });
+	                },
+	                error: function(data){
+	                    console.log('Error loading images.' + data.statusText);
+	                }
+	            });
+	        }
         }
 	</script>
 	
