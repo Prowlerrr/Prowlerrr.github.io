@@ -10,20 +10,44 @@
 </head>
 
 <body>
-	<div id="datepicker"></div>
-	<div id="title"></div>
-	<div id="exactDate"></div>
-	<div id="yearsPassed"></div>
-	<div id="description"></div>
-	<div id="map"></div>
-	<div id="latitude" style="display: none;"></div>
-	<div id="longitude" style="display: none;"></div>
-	<div id="images"></div>
+	<div id="tabs">
+		<ul>
+			<li><a href="#tabs-1"></a></li>
+		</ul>
+		<div id="tabs-1">
+			<div id="datepicker"></div>
+			<div id="title"></div>
+			<div id="exactDate"></div>
+			<div id="yearsPassed"></div>
+			<div id="description"></div>
+			<div id="map"></div>
+			<div id="latitude" style="display: none;"></div>
+			<div id="longitude" style="display: none;"></div>
+			<div id="images"></div>
+		</div>
+	</div>
 
 	<script>
         var eventsDir = "/calendar/events/v1"
         var githubUrl = "https://api.github.com/repos/prowlerrr/prowlerrr.github.io/contents" + eventsDir;
-        var forceLocal = false;
+        var forceLocal = true;
+
+        var tabTitle = $( "#tab_title" ),
+        tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
+        tabCounter = 2;
+        
+        var tabs = $("#tabs").tabs();
+        
+        var label = tabTitle.val() || "Tab " + tabCounter,
+        id = "tabs-" + tabCounter,
+        li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
+        tabContentHtml = "Tab " + tabCounter + " content.";
+        tabContentHtml = $('#tabs-1').html();
+        
+		tabs.find( ".ui-tabs-nav" ).append( li );
+		tabs.append( "<div id='" + id + "'>" + tabContentHtml + "</div>" );
+		tabs.tabs( "refresh" );
+		tabCounter++;
     </script>
 
 	<script>
@@ -44,8 +68,7 @@
                 });
             } });
         } else {
-            $.ajax({ url : githubUrl, dataType : 'json',
-            success : function(data) {
+            $.ajax({ url : githubUrl, dataType : 'json', success : function(data) {
                 console.log(data);
 
                 $.each(data, function(key, val) {
@@ -71,7 +94,7 @@
 
             }, onSelect : function(dateText) {
                 clear();
-                
+
                 initData(dateText);
             } });
         });
@@ -113,7 +136,9 @@
                         years = new Date().getFullYear() - myDateStr.getFullYear();
                         document.querySelector('#yearsPassed').textContent = years + " years ago";
                     } else {
-                        span.textContent = this.textContent;
+                        var str = this.textContent;
+
+                        span.innerHTML = str;
                     }
                 });
             }, error : function(data) {
@@ -134,7 +159,7 @@
                 } });
             } else {
                 $.ajax({ url : url, dataType : 'json', success : function(data) {
-                    console.log(data); 
+                    console.log(data);
 
                     $.each(data, function(key, val) {
                         if (val.name.match(/\.(jpe?g|png|gif)$/)) {
@@ -146,27 +171,40 @@
                 } });
             }
         }
-
         function initData(date) {
-            $.ajax({ url : githubUrl + "/" + date, dataType : 'json', success : function(data) {
+            if (forceLocal) {
+                var dateUrl = "/calendar/events/v1/" + date;
 
-                $.each(data, function(key, val) {
+                $.ajax({ url : dateUrl, success : function(data) {
 
-                    var urlNoBranch = this.url.substring(0, this.url.indexOf('?'));
-
-                    $.ajaxSetup({ async : false });
-                    
-                    $.getJSON(urlNoBranch + "/" + "data.xml", function(data) {
-                        initProperties(data.download_url);
+                    $(data).find("a").attr("href", function(i, val) {
+                        
+                        initProperties(dateUrl + "/" + val + "data.xml");
                     });
+                }, error : function(error) {
+                    console.log('Error loading images.' + error.statusText);
+                } });
+            } else {
+                $.ajax({ url : githubUrl + "/" + date, dataType : 'json', success : function(data) {
 
-                    initImages(urlNoBranch);
-                    
-                    initMap();
-                });
-            }, error : function(error) {
-                console.log('Error loading images.' + error.statusText);
-            } });
+                    $.each(data, function(key, val) {
+
+                        var urlNoBranch = this.url.substring(0, this.url.indexOf('?'));
+
+                        $.ajaxSetup({ async : false });
+
+                        $.getJSON(urlNoBranch + "/" + "data.xml", function(data) {
+                            initProperties(data.download_url);
+                        });
+
+                        initImages(urlNoBranch);
+
+                        initMap();
+                    });
+                }, error : function(error) {
+                    console.log('Error loading images.' + error.statusText);
+                } });
+            }
         }
     </script>
 
@@ -191,7 +229,7 @@
     </script>
 	<script>
         clear();
-        initData("3-9");
+        initData("9-6");
     </script>
 	<script
 		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap"
