@@ -12,18 +12,18 @@
 <body>
 	<div id="tabs">
 		<ul>
-			<li><a href="#tabs-1"></a></li>
+			<li><a href="#tabs-0"></a></li>
 		</ul>
-		<div id="tabs-1">
-			<div id="datepicker"></div>
-			<div id="title"></div>
-			<div id="exactDate"></div>
-			<div id="yearsPassed"></div>
-			<div id="description"></div>
-			<div id="map"></div>
-			<div id="latitude" style="display: none;"></div>
-			<div id="longitude" style="display: none;"></div>
-			<div id="images"></div>
+		<div id="tabs-0">
+			<div id="datepicker" class="tabs-0"></div>
+			<div id="title" class="tabs-0"></div>
+			<div id="exactDate" class="tabs-0"></div>
+			<div id="yearsPassed" class="tabs-0"></div>
+			<div id="description" class="tabs-0"></div>
+			<div id="map" class="tabs-0"></div>
+			<div id="latitude" style="display: none;" class="tabs-0"></div>
+			<div id="longitude" style="display: none;" class="tabs-0"></div>
+			<div id="images" class="tabs-0"></div>
 		</div>
 	</div>
 
@@ -31,23 +31,22 @@
         var eventsDir = "/calendar/events/v1"
         var githubUrl = "https://api.github.com/repos/prowlerrr/prowlerrr.github.io/contents" + eventsDir;
         var forceLocal = true;
+        var tabCounter = 0;
+		
+		//var span = document.querySelector('#title');
 
-        var tabTitle = $( "#tab_title" ),
-        tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
-        tabCounter = 2;
+        //span.innerHTML = "DAAAAAAAAAAAAA";
         
-        var tabs = $("#tabs").tabs();
+        // document.querySelector('#yearsPassed').textContent = "DAAAAAAAAAAAAA";
+        // $("#tabs-2").children("div").css("background-color", "yellow");
         
-        var label = tabTitle.val() || "Tab " + tabCounter,
-        id = "tabs-" + tabCounter,
-        li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
-        tabContentHtml = "Tab " + tabCounter + " content.";
-        tabContentHtml = $('#tabs-1').html();
+        // $("#tabs-2").children("div")[3].textContent = "DAAAAAAAAAAAAA";
         
-		tabs.find( ".ui-tabs-nav" ).append( li );
-		tabs.append( "<div id='" + id + "'>" + tabContentHtml + "</div>" );
-		tabs.tabs( "refresh" );
-		tabCounter++;
+        // $('#tabs-2 #title').textContent = "DAAAAAAAAAAAAA";
+        
+        $('[href="#tab2"]').closest('li').hide();
+        $($("#tabs").find("li")[1]).hide()
+        
     </script>
 
 	<script>
@@ -120,6 +119,7 @@
             images.text("");
         }
 
+        
         function initProperties(url) {
             $.ajax({ url : url, dataType : 'xml', success : function(data) {
                 var xml_node = $('data', data);
@@ -171,6 +171,29 @@
                 } });
             }
         }
+
+        function createTab(label) {
+            tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
+            
+            tabs = $("#tabs").tabs();
+            
+            id = "tabs-" + tabCounter,
+            li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
+            tabContentHtml = $('#tabs-0').html();
+            
+            tabs.find( ".ui-tabs-nav" ).append( li );
+            
+            tabCounter++;
+
+            tabContentHtml = tabContentHtml.replace(/tabs-0/g, 'tabs-' + tabCounter);
+            
+            tabs.append( "<div id='" + id + "'>" + tabContentHtml + "</div>" );
+            tabs.tabs( "refresh" );
+            
+            
+            //$("#title.tabs-2").text("DAAAAAAAAAAAAA");
+        }
+        
         function initData(date) {
             if (forceLocal) {
                 var dateUrl = "/calendar/events/v1/" + date;
@@ -178,6 +201,8 @@
                 $.ajax({ url : dateUrl, success : function(data) {
 
                     $(data).find("a").attr("href", function(i, val) {
+
+                        createTab(val);
                         
                         initProperties(dateUrl + "/" + val + "data.xml");
                     });
