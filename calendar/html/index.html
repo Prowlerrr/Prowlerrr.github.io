@@ -10,46 +10,81 @@
 </head>
 
 <body>
+	<div id="tabs-template" style="display: none;" >
+		<div id="tabs-0">
+			<div id="tabs-0-title" class="title"></div>
+			<div id="tabs-0-exactDate" class="exactDate"></div>
+			<div id="tabs-0-yearsPassed" class="yearsPassed"></div>
+			<div id="tabs-0-description" class="description"></div>
+			<div id="tabs-0-map" class="map"></div>
+			<div id="tabs-0-latitude" style="display: none;" class="latitude"></div>
+			<div id="tabs-0-longitude" style="display: none;" class="longitude"></div>
+			<div id="tabs-0-images" class="images"></div>
+		</div>
+	</div>
+	
+	<div id="datepickerDiv">
+		<ul>
+			<li><div id="datepicker"></div></li>
+		</ul>
+	</div>
+	
 	<div id="tabs">
 		<ul>
-			<li><a href="#tabs-0"></a></li>
+			<li>TEMPLATE</li>
 		</ul>
-		<div id="tabs-0">
-			<div id="datepicker" class="tabs-0"></div>
-			<div id="title" class="tabs-0"></div>
-			<div id="exactDate" class="tabs-0"></div>
-			<div id="yearsPassed" class="tabs-0"></div>
-			<div id="description" class="tabs-0"></div>
-			<div id="map" class="tabs-0"></div>
-			<div id="latitude" style="display: none;" class="tabs-0"></div>
-			<div id="longitude" style="display: none;" class="tabs-0"></div>
-			<div id="images" class="tabs-0"></div>
-		</div>
 	</div>
 
 	<script>
         var eventsDir = "/calendar/events/v1"
         var githubUrl = "https://api.github.com/repos/prowlerrr/prowlerrr.github.io/contents" + eventsDir;
         var forceLocal = false;
-        var tabCounter = 0;
-		
-		//var span = document.querySelector('#title');
+        var currentTab = 1;
+        var prefix = '#tabs-' + currentTab + "-";
+        
+        function setTab(index) {
+        	currentTab = index;
+        	prefix = '#tabs-' + index + "-";
+        }
+        
+        function createTab(label) {
+            tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
+            
+            id = "tabs-" + currentTab,
+            li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
 
-        //span.innerHTML = "DAAAAAAAAAAAAA";
+            tabContentHtml = $('#tabs-0').html();
+            
+            tabs = $("#tabs").tabs();
+            tabs.find( ".ui-tabs-nav" ).append( li );
+            
+            tabContentHtml = tabContentHtml.replace(/tabs-0/g, 'tabs-' + currentTab);
+            
+            tabs.append( "<div id='" + id + "'>" + tabContentHtml + "</div>" );
+            tabs.tabs( "refresh" );
+        }
         
-        // document.querySelector('#yearsPassed').textContent = "DAAAAAAAAAAAAA";
-        // $("#tabs-2").children("div").css("background-color", "yellow");
-        
-        // $("#tabs-2").children("div")[3].textContent = "DAAAAAAAAAAAAA";
-        
-        // $('#tabs-2 #title').textContent = "DAAAAAAAAAAAAA";
-        
-        $('[href="#tab2"]').closest('li').hide();
-        $($("#tabs").find("li")[1]).hide()
-        
+        function clear() {
+            images = $("#title");
+            images.text("");
+            images = $("#exactDate");
+            images.text("");
+            images = $("#yearsPassed");
+            images.text("");
+            images = $("#description");
+            images.text("");
+            images = $("#map");
+            images.text("");
+            images = $("#latitude");
+            images.text("");
+            images = $("#longitude");
+            images.text("");
+            images = $("#images");
+            images.text("");
+        }        
     </script>
 
-	<script>
+	<script id="init">
         function isLocal() {
             return forceLocal && location.hostname === "localhost" || location.hostname === "127.0.0.1";
         }
@@ -92,34 +127,70 @@
                 return [ false ];
 
             }, onSelect : function(dateText) {
-                clear();
+            	$('div#tabs ul li').remove();
+            	$('div#tabs div').remove();
+            	$("div#tabs").tabs("refresh");
+            	
+            	setTab(1);
+            	//clear();
 
                 initData(dateText);
             } });
         });
     </script>
+    
+  	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap">  <!--async defer --> </script>
+
+
+    
+    <!-- INIT  -->
+    
+    
 
 	<script>
-        function clear() {
-            images = $("#title");
-            images.text("");
-            images = $("#exactDate");
-            images.text("");
-            images = $("#yearsPassed");
-            images.text("");
-            images = $("#description");
-            images.text("");
-            images = $("#map");
-            images.text("");
-            images = $("#latitude");
-            images.text("");
-            images = $("#longitude");
-            images.text("");
-            images = $("#images");
-            images.text("");
-        }
+	    function initData(date) {
+	        if (forceLocal) {
+	            var dateUrl = "/calendar/events/v1/" + date;
+	
+	            $.ajax({ url : dateUrl, success : function(data) {
+	
+	                $(data).find("a").attr("href", function(i, val) {
+	
+	                    createTab(val);
+	                    
+	                    initProperties(dateUrl + "/" + val + "data.xml");
+	                });
+	            }, error : function(error) {
+	                console.log('Error loading images.' + error.statusText);
+	            } });
+	        } else {
+	            $.ajax({ url : githubUrl + "/" + date, dataType : 'json', success : function(data) {
+	            	currentTab = 1;
+	            	
+	                $.each(data, function(key, val) {
+	                	setTab(currentTab);
+	                	createTab(date);
+	
+	                    var urlNoBranch = this.url.substring(0, this.url.indexOf('?'));
+	
+	                    $.ajaxSetup({ async : false });
+	                    
+	                    $.getJSON(urlNoBranch + "/" + "data.xml", function(data) {
+	                        initProperties(data.download_url);
 
-        
+	                        initImages(urlNoBranch);
+		
+		                    initMap();
+	                    });
+	                    
+	                    currentTab++;
+	                });
+	            }, error : function(error) {
+	                console.log('Error loading images.' + error.statusText);
+	            } }); 
+	        }
+	    }
+    
         function initProperties(url) {
             $.ajax({ url : url, dataType : 'xml', success : function(data) {
                 var xml_node = $('data', data);
@@ -127,14 +198,14 @@
                 tags.each(function() {
                     var cols = $(this).children();
 
-                    var span = document.querySelector('#' + this.tagName);
+                    var span = document.querySelector(prefix + this.tagName);
 
                     var myDateStr = new Date(this.textContent);
                     if (!isNaN(myDateStr.getMonth())) {
                         span.textContent = moment(myDateStr).format('D MMMM YYYY');
 
                         years = new Date().getFullYear() - myDateStr.getFullYear();
-                        document.querySelector('#yearsPassed').textContent = years + " years ago";
+                        document.querySelector(prefix + 'yearsPassed').textContent = years + " years ago";
                     } else {
                         var str = this.textContent;
 
@@ -147,13 +218,14 @@
         }
 
         function initImages(url) {
+        	var imageDiv = $(prefix + "images");
             if (isLocal()) {
                 var folder = eventsDir + "/" + date + "/";
 
                 $.ajax({ url : folder, success : function(data) {
                     $(data).find("a").attr("href", function(i, val) {
                         if (val.match(/\.(jpe?g|png|gif)$/)) {
-                            images.append("<img  class=\"images\"  src='"+ folder + val +"'>");
+                        	imageDiv.append("<img  class=\"images\"  src='"+ folder + val +"'>");
                         }
                     });
                 } });
@@ -163,7 +235,7 @@
 
                     $.each(data, function(key, val) {
                         if (val.name.match(/\.(jpe?g|png|gif)$/)) {
-                            images.append("<a href='"+val.download_url+"'> <img  class=\"images\"  src='"+ val.download_url +"'> </a>");
+                        	imageDiv.append("<a href='"+val.download_url+"'> <img  class=\"images\"  src='"+ val.download_url +"'> </a>");
                         }
                     });
                 }, error : function(data) {
@@ -172,71 +244,9 @@
             }
         }
 
-        function createTab(label) {
-            tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
-            
-            tabs = $("#tabs").tabs();
-            
-            id = "tabs-" + tabCounter,
-            li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
-            tabContentHtml = $('#tabs-0').html();
-            
-            tabs.find( ".ui-tabs-nav" ).append( li );
-            
-            tabCounter++;
-
-            tabContentHtml = tabContentHtml.replace(/tabs-0/g, 'tabs-' + tabCounter);
-            
-            tabs.append( "<div id='" + id + "'>" + tabContentHtml + "</div>" );
-            tabs.tabs( "refresh" );
-            
-            
-            //$("#title.tabs-2").text("DAAAAAAAAAAAAA");
-        }
-        
-        function initData(date) {
-            if (forceLocal) {
-                var dateUrl = "/calendar/events/v1/" + date;
-
-                $.ajax({ url : dateUrl, success : function(data) {
-
-                    $(data).find("a").attr("href", function(i, val) {
-
-                        createTab(val);
-                        
-                        initProperties(dateUrl + "/" + val + "data.xml");
-                    });
-                }, error : function(error) {
-                    console.log('Error loading images.' + error.statusText);
-                } });
-            } else {
-                $.ajax({ url : githubUrl + "/" + date, dataType : 'json', success : function(data) {
-
-                    $.each(data, function(key, val) {
-
-                        var urlNoBranch = this.url.substring(0, this.url.indexOf('?'));
-
-                        $.ajaxSetup({ async : false });
-
-                        $.getJSON(urlNoBranch + "/" + "data.xml", function(data) {
-                            initProperties(data.download_url);
-                        });
-
-                        initImages(urlNoBranch);
-
-                        initMap();
-                    });
-                }, error : function(error) {
-                    console.log('Error loading images.' + error.statusText);
-                } });
-            }
-        }
-    </script>
-
-	<script>
         function initMap() {
-            var latitude = document.getElementById('latitude').innerHTML;
-            var longitude = document.getElementById('longitude').innerHTML;
+            var latitude = $(prefix + "latitude")[0].innerHTML; //document.getElementById('latitude').innerHTML;
+            var longitude =  $(prefix + "longitude")[0].innerHTML; //document.getElementById('longitude').innerHTML;
 
             if (latitude > 0) {
                 var directionsDisplay, directionsService, map;
@@ -245,22 +255,18 @@
                 directionsDisplay = new google.maps.DirectionsRenderer();
                 var latLng = new google.maps.LatLng(latitude, longitude);
                 var mapOptions = { zoom : 15, mapTypeId : google.maps.MapTypeId.ROADMAP, center : latLng }
-                map = new google.maps.Map(document.getElementById("map"), mapOptions);
+                map = new google.maps.Map($(prefix + "map")[0], mapOptions);
                 directionsDisplay.setMap(map);
 
                 var marker = new google.maps.Marker({ position : latLng, map : map, title : 'Event map' });
             }
         }
     </script>
+    
 	<script>
         clear();
-        initData("9-6");
+        initData("3-3");
     </script>
-	<script
-		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGBXaddK5_BeU4HYEAFHqyn8Mnr2sckKM&callback=initMap"
-		async defer>
-        
-    </script>
-
+    
 </body>
 </html>
