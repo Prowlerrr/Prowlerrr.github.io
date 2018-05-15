@@ -12,7 +12,6 @@
 <body>
 	<div id="tabs-template" style="display: none;" >
 		<div id="tabs-0">
-			<div id="tabs-0-title" class="title"></div>
 			<div id="tabs-0-exactDate" class="exactDate"></div>
 			<div id="tabs-0-yearsPassed" class="yearsPassed"></div>
 			<div id="tabs-0-description" class="description"></div>
@@ -31,7 +30,6 @@
 	
 	<div id="tabs">
 		<ul>
-			<li>TEMPLATE</li>
 		</ul>
 	</div>
 
@@ -48,10 +46,10 @@
         }
         
         function createTab(label) {
-            tabTemplate = "<li><a href='#{href}'>#{label}</a></li>",
+            tabTemplate = "<li><a id=#{title_id} href='#{href}'>#{label}</a></li>",
             
             id = "tabs-" + currentTab,
-            li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
+            li = $( tabTemplate.replace( /#\{title_id\}/g, id + "-title").replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, label ) ),
 
             tabContentHtml = $('#tabs-0').html();
             
