@@ -1,40 +1,44 @@
 #datepicker {
+	
 }
+
 .title {
-  font-weight: bold;
-  color: #5a2323;
-  font-size: 32px;
-  text-align: center;
+	font-weight: bold;
+	color: #5a2323;
+	font-size: 32px;
+	text-align: center;
 }
+
 .exactDate {
-  font-weight: bold;
-  color: #5a2323;
-  font-size: 25px;
-  text-align: center;
-  border: 3px solid white;
+	font-weight: bold;
+	color: #5a2323;
+	font-size: 25px;
+	text-align: center;
+	border: 3px solid white;
 }
+
 .yearsPassed {
-  font-weight: bold;
-  color: #5a2323;
-  font-size: 20px;
-  text-align: left;
-  float: left;
-  border: 3px solid white;
+	font-weight: bold;
+	color: #5a2323;
+	font-size: 20px;
+	text-align: left;
+	float: left;
+	border: 3px solid white;
 }
+
 .map {
-    height: 25%;
-    width: 25%;
-    max-height: 25%;
-max-width: 25%;
-  float: left;
+	height: 25%;
+	width: 25%;
+	max-height: 25%;
+	max-width: 25%;
+	float: left;
 }
-.images
-{
-display: inline-block;
-float:left;
-margin: 0px;
-padding: 0px;
-border: 5px solid white;
-max-height: 25%;
-max-width: 25%;
+
+.images {
+	float: left;
+	margin: 0px;
+	padding: 0px;
+	border: 5px solid white;
+	max-height: 75%;
+	max-width: 75%;
 }
